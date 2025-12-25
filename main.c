@@ -157,12 +157,16 @@ float demodulate(float *freq_samples, float last_sample, uint8_t *buffer, uint8_
 // Decimate frequency samples to match the sample rate of the WAV audio file.
 // This is a fundamental operation for converting the FM audio into the WAV
 // file.
-// Decimation, in this case, consists in accepting a sample every
-// DECIMATION_FACTOR samples. The decimation factor is computed as the ratio
-// between the SDR sample rate and the audio file sample rate.
+// Decimation is implemented using a Boxcar low pass filter. In practice, each
+// decimated sample is obtained by averaging out a number of samples equal to
+// the DECIMATED_FACTOR. This works better than taking one sample every
+// DECIMATION_FACTOR samples and improves audio quality in the end.
 int decimate(float *decimated_samples, float *freq_samples, int len) {
-    for (int i = 0, j = 0; i < (len / DECIMATION_FACTOR); i++, j+=DECIMATION_FACTOR) {
-        decimated_samples[i] = freq_samples[j];
+    for (int i = 0, j = DECIMATION_FACTOR; i < (len / DECIMATION_FACTOR); i++, j+=DECIMATION_FACTOR) {
+        for (int k = j - DECIMATION_FACTOR; k < j; k++) {
+            decimated_samples[i] += freq_samples[k];
+        }
+        decimated_samples[i] /= DECIMATION_FACTOR;
     }
 
     return len / DECIMATION_FACTOR;
