@@ -190,11 +190,13 @@ int main(int argc, char **argv) {
     // Configuration of the SDR device.
     rtlsdr_dev_t *sdr = NULL;
     float center_freq = 0.0;
+    int audio_duration = 0;
 
     if (argc > 1) {
         center_freq = atof(argv[1]);
+        audio_duration = atoi(argv[2]);
     } else {
-        fprintf(stderr, "Missing center frequency argument\n");
+        fprintf(stderr, "Missing center frequency argument or audio duration\n");
         exit(1);
     }
 
@@ -237,7 +239,7 @@ int main(int argc, char **argv) {
     int read_bytes = 0;
     float last_sample = 0.0f;
     int bytes_count = 0;
-    int total_bytes = SAMPLE_RATE * AUDIO_DURATION * 2;
+    int total_bytes = SAMPLE_RATE * audio_duration * 2;
     long total_audio_bytes = 0;
     while (bytes_count < total_bytes) {
         // Read BUFFER_SIZE IQ samples from SDR into buffer.
