@@ -14,7 +14,7 @@ To use the program you need to have librtlsdr installed on your device. Dependin
 
 If you are working with an macbook with Apple silicon CPU and you have a V4 dongle with the correct version of the library installed you can compile the program by using:
 ```bash
-    make
+make
 ```
 Otherwise you might need to modify the `Makefile` content.
 
