@@ -199,11 +199,14 @@ int main(int argc, char **argv) {
     float center_freq = 0.0;
     int audio_duration = 0;
 
-    if (argc > 1) {
+    if (argc > 2) {
         center_freq = atof(argv[1]);
         audio_duration = atoi(argv[2]);
     } else {
-        fprintf(stderr, "Missing center frequency argument or audio duration\n");
+        fprintf(
+                stderr, 
+                "At least an argument is missing.\nMake sure to have inserted both center frequency and audio duration.\n"
+        );
         exit(1);
     }
 
