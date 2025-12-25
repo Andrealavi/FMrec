@@ -81,8 +81,11 @@ float get_instant_freq(float i1, float q1, float i2, float q2) {
 }
 
 // Compute istantaneous frequency over all the IQ samples.
-void get_freq_values(float *freq_samples, float *i_samples, float *q_samples, int len) {
-    for (int i = 0; i < len - 1; i++) {
+void get_freq_values(float *freq_samples, float *i_samples, float *q_samples, float last_i, float last_q, int len) {
+    freq_samples[0] = get_instant_freq(
+        last_i, last_q, i_samples[0], q_samples[0] 
+    );
+    for (int i = 1; i < len - 1; i++) {
         freq_samples[i] = get_instant_freq(
                 i_samples[i], q_samples[i], i_samples[i+1], q_samples[i+1]
         );
@@ -133,7 +136,7 @@ void dc_block_filter(float *samples_buffer, int len) {
 // - Compute the frequency samples
 // - Apply De-emphasize filter on frequency samples
 // - Apply DC block filter on frequency samples
-float demodulate(float *freq_samples, float last_sample, uint8_t *buffer, int len) {
+float demodulate(float *freq_samples, float last_sample, uint8_t *buffer, uint8_t last_i, uint8_t last_q, int len) {
     float *i_samples = malloc(sizeof(float) * (len / 2));
     float *q_samples = malloc(sizeof(float) * (len / 2));
 
@@ -142,7 +145,7 @@ float demodulate(float *freq_samples, float last_sample, uint8_t *buffer, int le
         q_samples[i] = convert_value(buffer[j+1]);
     }
 
-    get_freq_values(freq_samples, i_samples, q_samples, len/2);
+    get_freq_values(freq_samples, i_samples, q_samples, convert_value(last_i), convert_value(last_q), len/2);
     deemphasize_filter(freq_samples, last_sample, len/2);
     dc_block_filter(freq_samples, len/2);
 
@@ -233,8 +236,11 @@ int main(int argc, char **argv) {
 
     // Main buffers for data handling.
     uint8_t buffer[BUFFER_SIZE];
+    memset(buffer, 0, sizeof(uint8_t) * BUFFER_SIZE);
     float freq_samples[BUFFER_SIZE / 2];
     float freq_samples_decimated[BUFFER_SIZE / (2 * DECIMATION_FACTOR)];
+    uint8_t last_i = 0;
+    uint8_t last_q = 0;
 
     int read_bytes = 0;
     float last_sample = 0.0f;
@@ -243,6 +249,8 @@ int main(int argc, char **argv) {
     long total_audio_bytes = 0;
     while (bytes_count < total_bytes) {
         // Read BUFFER_SIZE IQ samples from SDR into buffer.
+        last_i = buffer[BUFFER_SIZE - 2];
+        last_q = buffer[BUFFER_SIZE - 1];
         int result = rtlsdr_read_sync(sdr, buffer, BUFFER_SIZE, &read_bytes); 
         if (result < 0) {
             fprintf(stderr, "An error occurred while reading IQ samples.\n");
@@ -250,7 +258,7 @@ int main(int argc, char **argv) {
         }
 
         // FM signal handling.
-        last_sample = demodulate(freq_samples, last_sample, buffer, BUFFER_SIZE);    
+        last_sample = demodulate(freq_samples, last_sample, buffer, last_i, last_q, BUFFER_SIZE);    
         int samples_to_write = decimate(freq_samples_decimated, freq_samples, BUFFER_SIZE / 2);
         
         // Frequency conversion into WAV data and actual write.
