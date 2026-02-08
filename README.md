@@ -12,7 +12,7 @@ The implementation focuses on understanding the core mathematics of DSP, includi
 
 To use the program you need to have librtlsdr installed on your device. Depending on the kind of dongle you may need specific versions (e.g. I used a version of the library for the RTL-SDR Blog V4 dongle which is different from the standard one).
 
-If you are working with an macbook with Apple silicon CPU and you have a V4 dongle with the correct version of the library installed you can compile the program by using:
+If you are working with a Macbook with Apple Silicon CPU and you have a V4 dongle with the correct version of the library installed you can compile the program by using:
 ```bash
 make
 ```
